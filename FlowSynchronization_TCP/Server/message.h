@@ -22,6 +22,8 @@ public:
     int getType() const;
     void setType(int value);
     static const int DELAY = 80;
+    static const int WAIT_MAX_TIME = 50000;
+
 
 signals:
 

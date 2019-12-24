@@ -1,49 +1,30 @@
 #include "courier.h"
 
+#include <QHostAddress>
+
 Courier::Courier(QObject *parent) : QObject(parent)
 {
-    socket = new QTcpSocket();
-    socket->connectToHost("localhost", 2140);
-    connect(socket, SIGNAL(connected()), SLOT(slotConnected()));
-    //connect(socket, SIGNAL(readyRead()), SLOT(slotReadyRead()));
 
-    socketService = new QTcpSocket();
-    socketService->connectToHost("localhost", 2141);
 
     from = 0;
     code = 0;
     nextBlockSize = 0;
-    serverCanal = new QCanal ("ServerCanal"); //канал, чтобы знать сколько сокетов
+
 }
 
 
 void Courier::run()
 {
-    QThread::msleep(Message::DELAY);    //небольшая пауза
-    while (from != Message::DISPATCHER && code != Message::READY){    //пока диспетчер не освободится
-        socket->waitForReadyRead(); //ждем пока диспетчер не будет готов
-        slotReadyRead();    //читаем что нам прислали
-    }
+    socket = new QTcpSocket();
+    socket->connectToHost(QHostAddress("127.0.0.1"), 2140);
+    connect(socket, SIGNAL(connected()), SLOT(slotConnected()));
+    //connect(socket, SIGNAL(readyRead()), SLOT(slotReadyRead()));
 
-    slotSend(Message::DISPATCHER, Message::MAKE_ORDER); //делаем заказ
-    toFile("заказал стул");
-
-    socket->waitForReadyRead(); //ждем когда ответят
-    QThread::msleep(Message::DELAY);//небольшая пауза
-    slotReadyRead();    //читаем что нам прислали
-
-    if (code == Message::REJECTION)
-        toFile("получил отказ");
-    else if(code == Message::ORDER_COMPLETE){
-        toFile("получил готовый заказ");
-
-        slotSend(Message::COURIER, Message::MONEY_TRANSFER);    //передаем деньги
-        toFile("передал деньги");
-    }
-
+//    socketService = new QTcpSocket();
+//    socketService->connectToHost("localhost", 2141);
+    serverCanal = new QCanal ("ServerCanal"); //канал, чтобы знать сколько сокетов
 
     while (true) {
-        //пока в канал мастера не поступит заказ
         socket->waitForReadyRead(); //ждем когда ответят
         QThread::msleep(Message::DELAY);//небольшая пауза
         slotReadyRead();    //читаем что нам прислали
@@ -85,7 +66,7 @@ void Courier::toFile(QString str)
 void Courier::slotReadyRead()
 {
     QDataStream in(socket);
-    in.setVersion(QDataStream::Qt_5_13);
+    in.setVersion(QDataStream::Qt_5_11);
     int to;
     in >> to >> from >> code;   //кому, от кого, код
 }
@@ -95,7 +76,7 @@ void Courier::slotSend(int to, int code)
 {
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_13);
+    out.setVersion(QDataStream::Qt_5_11);
     out << to << Message::COURIER << code;      //кому, от кого, код
 
     out.device()->seek(0);

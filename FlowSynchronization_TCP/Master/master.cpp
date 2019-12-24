@@ -1,25 +1,29 @@
 #include "master.h"
 
+#include <QHostAddress>
+
 Master::Master(QObject *parent) : QObject(parent)
 {
-    socket = new QTcpSocket();
-    socket->connectToHost("localhost", 2140);
-    connect(socket, SIGNAL(connected()), SLOT(slotConnected()));
-    //connect(socket, SIGNAL(readyRead()), SLOT(slotReadyRead()));
-    socketService = new QTcpSocket();
-    socketService->connectToHost("localhost", 2141);
 
     from = 0;
     code = 0;
     nextBlockSize = 0;
-    serverCanal = new QCanal ("ServerCanal"); //канал, чтобы знать сколько сокетов
+
 }
 
 
 void Master::run()
 {
+    socket = new QTcpSocket();
+    socket->connectToHost(QHostAddress("127.0.0.1"), 2140);
+    connect(socket, SIGNAL(connected()), SLOT(slotConnected()));
+    //connect(socket, SIGNAL(readyRead()), SLOT(slotReadyRead()));
+    socketService = new QTcpSocket();
+    socketService->connectToHost("localhost", 2141);
+    serverCanal = new QCanal ("ServerCanal"); //канал, чтобы знать сколько сокетов
+
     while (serverCanal->get() < 5);  //ждем склад и курьера
-    slotSend(Message::DISPATCHER_SERVICE, Message::READY);    //говорим диспетчеру что готовы
+    //slotSend(Message::DISPATCHER, Message::READY);    //говорим диспетчеру что готовы
     while (true) {
         //пока в канал мастера не поступит заказ
         socket->waitForReadyRead(); //ждем когда ответят
@@ -64,7 +68,7 @@ void Master::toFile(QString str)
 void Master::slotReadyRead()
 {
     QDataStream in(socket);
-    in.setVersion(QDataStream::Qt_5_13);
+    in.setVersion(QDataStream::Qt_5_11);
     int to;
     in >> to >> from >> code;   //кому, от кого, код
 }
@@ -74,7 +78,7 @@ void Master::slotSend(int to, int code)
 {
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_13);
+    out.setVersion(QDataStream::Qt_5_11);
     out << to << Message::DISPATCHER << code;      //кому, от кого, код
 
     out.device()->seek(0);
