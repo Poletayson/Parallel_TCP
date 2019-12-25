@@ -35,16 +35,16 @@ void Storage::run()
             if (count >= NEED){
                 count -= NEED;
                 slotSend(Message::MASTER, Message::MATERIALS_ARE);    //передаем материалы мастеру
-                toFile("передал материалы. Осталось: " + QString::number(count));
+                toFile("передал материалы. Осталось: " + QString::number(count) + "\n");
             }
             else{
                 slotSend(Message::MASTER, Message::MATERIALS_ARE_NOT);  //передаем отказ
-                toFile("материалов недостаточно. Осталось: " + QString::number(count));
+                toFile("материалов недостаточно. Осталось: " + QString::number(count) + "\n");
             }
         }
         else{
             qDebug() << "Что-то не то";
-            toFile("Что-то не то");
+            toFile("..запросов нет...\n");
         }
     }
 }

@@ -32,9 +32,9 @@ void Master::run()
         QThread::msleep(Message::DELAY);
         qDebug() << "Получили от: " << from <<  " код: " << code;
         if (code == Message::MAKE_ORDER){
-            toFile("получил заказ");
+            toFile("Получил заказ");
             slotSend(Message::STORAGE, Message::MATERIALS_REQUEST);    //запрашиваем у склада
-            toFile("запросил материалы");
+            toFile("Запросил материалы");
             qDebug() << "Запросили материалы";
             //ждем отказ или материалы
             socket->waitForReadyRead(); //ждем когда ответят
@@ -45,16 +45,16 @@ void Master::run()
             //материалы поступили
             if (code == Message::MATERIALS_ARE){
                 slotSend(Message::COURIER, Message::ORDER_COMPLETE);    //заказ готов, курьер должен забрать
-                toFile("передал заказ курьеру");
+                toFile("Передал заказ курьеру\n");
             }
             else {
                 slotSend(Message::DISPATCHER, Message::REJECTION);    //передаем отказ
-                toFile("передал отказ");
+                toFile("Передал отказ\n");
             }
         }
         else{
             qDebug() << "Что-то не то!";
-            toFile("Что-то не то: ");
+            toFile("Что-то не то\n");
         }
     }
 

@@ -35,7 +35,7 @@ private:
     QTcpSocket *socketService;
     quint16  nextBlockSize;
 
-    int ORDER_COUNT = 8000;
+    int ORDER_COUNT = 1000000;
 
     int from;
     int code;

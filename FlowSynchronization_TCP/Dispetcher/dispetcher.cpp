@@ -51,8 +51,9 @@ void Dispetcher::run(){
                 QThread::msleep(Message::DELAY);
             }
             else{
+                toFile("Получил отказ");
                 slotSend(Message::CUSTOMER, Message::REJECTION);    //передаем отказ
-                toFile("отказ передан заказчику\n");
+                toFile("Отказ передан заказчику\n");
                 QThread::msleep(Message::DELAY);
                 while (from != Message::CUSTOMER || code != Message::READY){    //ждем когда заказчик будет готов
                     socket->waitForReadyRead(); //ждем пока диспетчер не будет готов

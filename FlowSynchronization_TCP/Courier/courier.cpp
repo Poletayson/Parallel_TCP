@@ -42,7 +42,7 @@ void Courier::run()
             if (code == Message::MONEY_TRANSFER){
                 toFile("получил деньги");
                 slotSend(Message::DISPATCHER, Message::MONEY_TRANSFER);    //передаем деньги диспетчеру
-                toFile("передал деньги");
+                toFile("передал деньги\n");
             }
             else{
                 qDebug() << "Что-то не то, ждалось " << Message::MONEY_TRANSFER;
@@ -51,7 +51,7 @@ void Courier::run()
         }
         else{
             qDebug() << "Что-то не то, ждалось " << Message::ORDER_COMPLETE;
-            toFile("заказа нет");
+            toFile("...заказа нет...\n");
         }
 
     }
@@ -63,7 +63,7 @@ void Courier::toFile(QString str)
     QFile File ("Courier.txt");
     while (!File.open(QFile::Append));
     QTextStream stream (&File);
-    stream <<"Курьер: " + str + "\n";
+    stream <<"курьер: " + str + "\n";
     File.close();
 }
 

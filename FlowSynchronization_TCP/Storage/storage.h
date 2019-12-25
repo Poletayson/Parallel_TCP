@@ -37,7 +37,7 @@ private:
     int from;
     int code;
 
-    int count = 50;
+    int count = 150;
     const int NEED = 10;
 
 
