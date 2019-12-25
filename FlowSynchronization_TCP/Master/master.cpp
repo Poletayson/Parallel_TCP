@@ -24,21 +24,24 @@ void Master::run()
 
     while (serverCanal->get() < 5);  //ждем склад и курьера
     //slotSend(Message::DISPATCHER, Message::READY);    //говорим диспетчеру что готовы
+    qDebug() << "Все в сборе, начинаем";
     while (true) {
         //пока в канал мастера не поступит заказ
         socket->waitForReadyRead(); //ждем когда ответят
         slotReadyRead();    //читаем что нам прислали
         QThread::msleep(Message::DELAY);
-
+        qDebug() << "Получили от: " << from <<  " код: " << code;
         if (code == Message::MAKE_ORDER){
             toFile("получил заказ");
             slotSend(Message::STORAGE, Message::MATERIALS_REQUEST);    //запрашиваем у склада
             toFile("запросил материалы");
+            qDebug() << "Запросили материалы";
             //ждем отказ или материалы
             socket->waitForReadyRead(); //ждем когда ответят
             slotReadyRead();    //читаем что нам прислали
             //while (masterCanal->get().getType() != Message::MATERIALS_ARE && masterCanal->get().getType() != Message::MATERIALS_ARE_NOT);
             QThread::msleep(Message::DELAY);
+            qDebug() << "Ответ от склада: " << from <<  " код: " << code;
             //материалы поступили
             if (code == Message::MATERIALS_ARE){
                 slotSend(Message::COURIER, Message::ORDER_COMPLETE);    //заказ готов, курьер должен забрать
@@ -50,6 +53,7 @@ void Master::run()
             }
         }
         else{
+            qDebug() << "Что-то не то!";
             toFile("Что-то не то: ");
         }
     }

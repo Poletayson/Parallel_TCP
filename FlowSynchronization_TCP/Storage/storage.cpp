@@ -26,10 +26,12 @@ void Storage::run()
     while (true) {
         socket->waitForReadyRead(); //ждем пока не закажут материалы
         slotReadyRead();    //читаем что нам прислали
+        qDebug() << "Запрос мастера: " << from <<  " код: " << code;
         QThread::msleep(Message::DELAY);
         //заказали материалы
         if (code == Message::MATERIALS_REQUEST){
             toFile("поступил заказ на материалы");
+            QThread::msleep(Message::DELAY);
             if (count >= NEED){
                 count -= NEED;
                 slotSend(Message::MASTER, Message::MATERIALS_ARE);    //передаем материалы мастеру
@@ -41,6 +43,7 @@ void Storage::run()
             }
         }
         else{
+            qDebug() << "Что-то не то";
             toFile("Что-то не то");
         }
     }

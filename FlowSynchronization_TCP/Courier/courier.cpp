@@ -28,26 +28,30 @@ void Courier::run()
         socket->waitForReadyRead(); //ждем когда ответят
         QThread::msleep(Message::DELAY);//небольшая пауза
         slotReadyRead();    //читаем что нам прислали
-
+        qDebug() << "Запрос мастера: " << from <<  " код: " << code;
         if (code == Message::ORDER_COMPLETE){
             toFile("получил заказ");
             slotSend(Message::CUSTOMER, Message::ORDER_COMPLETE);    //сообщает покупателю
             toFile("передал заказ");
+            qDebug() << "Передал заказ, ждем деньги";
 
             socket->waitForReadyRead(); //ждем когда ответят
             QThread::msleep(Message::DELAY);//небольшая пауза
             slotReadyRead();    //читаем что нам прислали
+            qDebug() << "Деньги от заказчика: " << from <<  " код: " << code;
             if (code == Message::MONEY_TRANSFER){
                 toFile("получил деньги");
                 slotSend(Message::DISPATCHER, Message::MONEY_TRANSFER);    //передаем деньги диспетчеру
                 toFile("передал деньги");
             }
             else{
+                qDebug() << "Что-то не то, ждалось " << Message::MONEY_TRANSFER;
                 toFile("Что-то не то");
             }
         }
         else{
-            toFile("Что-то не то");
+            qDebug() << "Что-то не то, ждалось " << Message::ORDER_COMPLETE;
+            toFile("заказа нет");
         }
 
     }

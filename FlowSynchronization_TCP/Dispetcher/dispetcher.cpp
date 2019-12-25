@@ -28,7 +28,7 @@ void Dispetcher::run(){
     qDebug()<<"Мастер запущен";
     while (true) {
         slotSend(Message::CUSTOMER, Message::READY);    //говорим покупателю что готовы
-        qDebug()<<"Написали заказчику";
+        qDebug()<<"сказали что готовы";
         while (from != Message::CUSTOMER || code != Message::MAKE_ORDER){    //пока нет заказа
             qDebug()<<"Ждем заказ";
             socket->waitForReadyRead(); //ждем пока диспетчер не будет готов
@@ -40,40 +40,31 @@ void Dispetcher::run(){
         if (code == Message::MAKE_ORDER){
             toFile("Получил заказ");
             slotSend(Message::MASTER, Message::MAKE_ORDER);    //передает заказ мастеру
-//            while (masterCanal->get().getType() != Message::EMPTY);
-//            QThread::msleep(Message::DELAY);
-//            //dispatcherCanalOrder->unlockCanal();
-//            masterCanal->put(Message::MAKE_ORDER, QVariant("Стул"));
+
             toFile("Передал заказ мастеру");
             socket->waitForReadyRead(); //ждем когда ответят
             slotReadyRead();    //читаем что нам прислали
-            QThread::msleep(Message::DELAY);
+
             qDebug() << "Ждем заказ/отказ, получили от: " << from <<  " код: " << code;
             if (code == Message::MONEY_TRANSFER){
-                toFile("Получил деньги");
-                slotSend(Message::CUSTOMER, Message::READY);    //говорим покупателю что готовы
-//                while (from != Message::CUSTOMER && code != Message::MAKE_ORDER){    //пока нет заказа
-//                    socket->waitForReadyRead(); //ждем пока диспетчер не будет готов
-//                    slotReadyRead();    //читаем что нам прислали
-//                }
+                toFile("Получил деньги\n");
+                QThread::msleep(Message::DELAY);
             }
             else{
                 slotSend(Message::CUSTOMER, Message::REJECTION);    //передаем отказ
-                toFile("отказ передан заказчику");
-
+                toFile("отказ передан заказчику\n");
+                QThread::msleep(Message::DELAY);
                 while (from != Message::CUSTOMER || code != Message::READY){    //ждем когда заказчик будет готов
                     socket->waitForReadyRead(); //ждем пока диспетчер не будет готов
                     slotReadyRead();    //читаем что нам прислали
                 }
-                slotSend(Message::CUSTOMER, Message::READY);    //сами говорим заказчику что готовы
+                QThread::msleep(Message::DELAY);
             }
 
         }
         else{
             toFile("Что-то не то");
         }
-        //slotSend(Message::CUSTOMER, Message::READY);    //сообщаем о готовности
-
     }
 
 }

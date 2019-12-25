@@ -40,21 +40,28 @@ void Customer::run(){
         qDebug()<<"Сейчас закажем";
         slotSend(Message::DISPATCHER, Message::MAKE_ORDER); //делаем заказ
         toFile("заказал стул");
-        qDebug()<<"Написали диспетчеру";
+        qDebug()<<"Заказали, ждем ответ";
 
         socket->waitForReadyRead(); //ждем когда ответят
         QThread::msleep(Message::DELAY);//небольшая пауза
         slotReadyRead();    //читаем что нам прислали
 
+        qDebug() << "Получили ответ от: " << from <<  " код: " << code;
         if (code == Message::REJECTION){
-            toFile("получил отказ");
+            toFile("получил отказ\n");
+            qDebug() << "ОТКАЗ";
             slotSend(Message::DISPATCHER, Message::READY);    //говорим диспетчеру что готовы
+
+            qDebug()<<"Можно начинать заново";
+
         }
         else if(code == Message::ORDER_COMPLETE){
             toFile("получил готовый заказ");
 
             slotSend(Message::COURIER, Message::MONEY_TRANSFER);    //передаем деньги
-            toFile("передал деньги");
+            toFile("передал деньги\n");
+
+            qDebug()<<"Можно начинать заново";
         }
     }
 }
