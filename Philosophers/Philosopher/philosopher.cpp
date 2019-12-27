@@ -30,7 +30,7 @@ void Philosopher::run()
     {
         while (true) {
             int waitTime = qrand() % Message::DELAY_MAX;
-            toFile("решил отдохнуть " + QString::number(waitTime) + "мс8 ");
+            toFile("решил отдохнуть " + QString::number(waitTime) + "мс");
             QThread::msleep(waitTime);  //небольшая пауза
             slotSend(Message::LEFT, Message::GET);     //просим инструмент в левую руку
             toFile("запросил инструмент в левую руку");
@@ -55,11 +55,11 @@ void Philosopher::run()
                     toFile("вернул инструмент из правой руки\n");
                 }
                 else {
-                    toFile("ЧТО-ТО НЕ ТАК! Ждал инструмент в правую руку");
+                    toFile("ЧТО-ТО НЕ ТАК! Ждал инструмент в правую руку\n");
                 }
             }
             else {
-                toFile("ЧТО-ТО НЕ ТАК! Ждал инструмент в левую руку");
+                toFile("ЧТО-ТО НЕ ТАК! Ждал инструмент в левую руку\n");
             }
         }
     }
@@ -89,7 +89,7 @@ void Philosopher::slotSend(int forkNum, int action)
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_11);
-    out << forkNum << id << action;      //какая вилка от кого, и что делать
+    out << forkNum << id << action;   //что, от кого, код
 
     out.device()->seek(0);
 
