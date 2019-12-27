@@ -9,6 +9,7 @@
 #include <QByteArray>
 #include <QDataStream>
 #include <QFile>
+#include <QThread>
 #include <qcanal.h>
 #include <message.h>
 

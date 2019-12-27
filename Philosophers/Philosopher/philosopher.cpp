@@ -15,13 +15,16 @@ void Philosopher::run()
     socket = new QTcpSocket();
 
     socket->connectToHost(QHostAddress("127.0.0.1"), 2140);
-    socket->waitForReadyRead(); //ждем когда нам пришлют наш id
+    socket->waitForReadyRead(INT_MAX); //ждем когда нам пришлют наш id
     QDataStream idStream(socket);
     idStream >> id;     //получаем наш id
-    socket->waitForReadyRead(); //ждем когда нам пришлют наш id
+    toFile("мастер запущен");
+    //slotSend(-1, Message::COMPLETE);     //говорим что готовы
+
+    socket->waitForReadyRead(); //ждем старта
     int start;
     idStream >> start;     //получаем сигнал
-
+    qsrand(id);
     //serverCanal = new QCanal ("ServerCanal"); //канал, чтобы знать сколько сокетов
 
     if(start == Message::START)
@@ -30,28 +33,34 @@ void Philosopher::run()
             int waitTime = qrand() % Message::DELAY_MAX;
             toFile("решил отдохнуть " + QString::number(waitTime) + "мс");
             QThread::msleep(waitTime);  //небольшая пауза
-            slotSend(Message::LEFT, Message::GET);     //просим инструмент в левую руку
-            toFile("запросил инструмент в левую руку");
+            bool wait;
             do{
-                socket->waitForReadyRead(INT_MAX); //ждем когда ответят
-                slotReadyRead();    //читаем что нам прислали
-            } while (first != Message::LEFT);   //ждем
+                wait = true;
+                slotSend(Message::LEFT, Message::GET);     //просим инструмент в левую руку
+                toFile("запросил инструмент в левую руку");
+                wait = socket->waitForReadyRead(); //ждем когда ответят
+                if (wait)
+                    slotReadyRead();    //читаем что нам прислали
+            } while (!wait);   //ждем
 
             if (first == Message::LEFT && second == Message::GET){
                 //получили!
                 toFile("получил инструмент в левую руку");
-                slotSend(Message::RIGHT, Message::GET);     //просим инструмент в правую руку
-                toFile("запросил инструмент в правую руку");
+
                 do{
+                    slotSend(Message::RIGHT, Message::GET);     //просим инструмент в правую руку
+                    toFile("запросил инструмент в правую руку");
+                    wait = true;
                     socket->waitForReadyRead(INT_MAX); //ждем когда ответят
-                    slotReadyRead();    //читаем что нам прислали
-                }while (first != Message::RIGHT);   //ждем
+                    if (wait)
+                        slotReadyRead();    //читаем что нам прислали
+                } while (!wait);   //ждем
                 //if (first == Message::RIGHT && second == Message::GET){
                     toFile("получил инструмент в правую руку");
                     QThread::msleep(qrand() % Message::DELAY_MAX);  //небольшая пауза
 
                     slotSend(Message::RIGHT, Message::GIVE);     //возвращаем инструмент из правой руки
-                    toFile("вернул инструмент из правой руки\n");
+                    toFile("вернул инструмент из правой руки");
                     //QThread::msleep(qrand() % Message::DELAY_MAX + 350);  //небольшая пауза
 
                     do{
@@ -69,7 +78,7 @@ void Philosopher::run()
                     }while (first != Message::COMPLETE);   //ждем пока сервер не примет
 
                     slotSend(-1, Message::COMPLETE);     //деталь готова
-                    toFile("передал свою деталь");
+                    toFile("передал свою деталь\n");
 
 
                 //}
@@ -80,8 +89,11 @@ void Philosopher::run()
             else {
                 toFile("ЧТО-ТО НЕ ТАК! Ждал инструмент в левую руку\n");
             }
+            QThread::msleep(qrand() % Message::DELAY_MAX + 350);  //небольшая пауза
         }
     }
+    else
+        toFile("НЕ ПОЛУЧЕН СИГНАЛ НА СТАРТ!");
 
 }
 

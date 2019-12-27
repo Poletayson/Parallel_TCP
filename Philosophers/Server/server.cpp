@@ -31,14 +31,17 @@ void Server::incommingConnection() // обработчик подключени�
     in.device()->seek(0);
     sockets[sockets.count() - 1]->write(arr);   //пишем подключенному философу его id
 
-    if (sockets.count() == 5)
-        foreach (QTcpSocket * socketIt, sockets) {
+
+    if (sockets.count() == 5){
+        QThread::msleep(450);  //небольшая пауза
+        for (int i = 0; i < sockets.count(); i++) {
             QByteArray arrN;
             QDataStream in2(&arrN, QIODevice::WriteOnly);
             in2 << Message::START;
             in2.device()->seek(0);
-            socketIt->write(arrN);   //говорим стартовать
+            sockets[i]->write(arrN);   //говорим стартовать
         }
+    }
 
 }
 void Server::readyRead() // обработчик входящих сообщений
@@ -98,8 +101,10 @@ void Server::readyRead() // обработчик входящих сообщен
                 masterStatus.insert(from, Message::RIGHT);    //статус мастера - инструмент для правой руки
                 masters.removeAt(masters.indexOf(from));    //удаляем мастера из очереди - у него уже все есть
             }
-            else
+            else{
+                 masterStatus.insert(from, Message::RIGHT_WAIT);    //статус мастера - ЖДЕТ инструмент для правой руки
                 qDebug() << "Инструмента нет";
+            }
         }
         else
             qDebug() << "Get некорректен!";
@@ -137,8 +142,8 @@ void Server::readyRead() // обработчик входящих сообщен
         qDebug() << "зашли в COMPLETE ";
         ++mastersDetails[from]; //добавим его детальку к массиву
         qDebug() << "Детали: " << mastersDetails[0]<< mastersDetails[1]<<mastersDetails[2] << mastersDetails[3]<< mastersDetails[4];
-        detailsChanged();
         toFile("получена деталь от мастера " + QString::number(from));
+        detailsChanged();
         qDebug() << "получена деталь от мастера " + QString::number(from);
         break;
     }
@@ -169,7 +174,7 @@ void Server::forkChanged()
                 masterStatus.insert(master, Message::LEFT);    //статус мастера - инструмент для левой руки
 
         }//просят в правую руку и правая вилка свободна
-        else if (masterStatus.value(master) == Message::LEFT && forks[(master + 1) % sockets.count()] == Message::FREE) {
+        else if (masterStatus.value(master) == Message::RIGHT_WAIT && forks[(master + 1) % sockets.count()] == Message::FREE) {
             qDebug() << "fCh отдали инструмент " << (master + 1) % sockets.count() << " мастеру "<<master;
             forks[(master + 1) % sockets.count()] = Message::USED;
             out << master << Message::RIGHT << Message::GET;
@@ -193,7 +198,7 @@ void Server::detailsChanged()
     }
     if (isComplect){
         for (int i = 0; i < mastersDetails.count(); i++) {
-            --mastersDetails[i];
+            mastersDetails[i]--;
         }
         toFile("комплект сформирован и отправлен на склад\n");
     }
