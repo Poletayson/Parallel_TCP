@@ -18,6 +18,7 @@ void Server::incommingConnection() // обработчик подключени�
 {
     QTcpSocket * socket = server->nextPendingConnection();  //получаем сокет нового входящего подключения
     sockets << socket;      //добавляем сокет
+    mastersDetails << 0;    //добавляем слот для деталей
     //connect(sockets[sockets.count() - 1], SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(stateChanged(QAbstractSocket::SocketState))); // делаем обработчик изменения статуса сокета
     connect(sockets[sockets.count() - 1], SIGNAL(readyRead()), this, SLOT(readyRead())); // подключаем входящие сообщения от сокета на наш обработчик
     //canal->put(sockets.count() - 1);    //число философов
@@ -28,8 +29,15 @@ void Server::incommingConnection() // обработчик подключени�
     QByteArray arr;
     QDataStream in(arr);
     in << sockets.count() - 1;      //единственный передаваемый параметр - id
-
     sockets[sockets.count() - 1]->write(arr);   //пишем подключенному философу его id
+
+    if (sockets.count() == 5)
+        foreach (QTcpSocket * socketIt, sockets) {
+            QByteArray arr;
+            QDataStream in(arr);
+            in << Message::START;
+            socketIt->write(arr);   //говорим стартовать
+        }
 
 }
 void Server::readyRead() // обработчик входящих сообщений от "вещающего"
@@ -62,13 +70,12 @@ void Server::readyRead() // обработчик входящих сообщен
                 masterStatus.insert(from, Message::NOT);    //статус мастера - нет инструмента
         }//просят в правую руку
         else if (what == Message::RIGHT) {
-
             //правая вилка свободна
             if (forks[(from + 1) % sockets.count()] == Message::FREE){
                 forks[(from + 1) % sockets.count()] = Message::USED;
                 out << from << Message::RIGHT << Message::GET;
                 sockets[from]->write(arrOut);
-                masterStatus.insert(from, Message::RIGHT);    //статус мастера - инструмент для левой руки
+                masterStatus.insert(from, Message::RIGHT);    //статус мастера - инструмент для правой руки
                 masters.removeAt(masters.indexOf(from));    //удаляем мастера из очереди - у него уже все есть
             }
         }
@@ -84,28 +91,17 @@ void Server::readyRead() // обработчик входящих сообщен
             forks[(from + 1) % sockets.count()] = Message::FREE;    //освобождаем инструмент
             masterStatus.insert(from, Message::NOT);    //статус мастера - пустые руки
         }
+        forkChanged();
         break;
     case Message::COMPLETE:     //мастер закончил изготовление!
-//здесь нужно добавить его детальку к массиву
+        ++mastersDetails[from]; //добавим его детальку к массиву
+        detailsChanged();
         break;
 
 
     }
-
-
-//    if (code == Message::GET)   else if (code == Message::GIVE)
-
-
-
-    //sockets[to]->write(arr);
-//
-
-
-//    foreach(QTcpSocket *socket, sockets) { // пишем входящие данные от "вещающего" получателям
-//        if (socket->state() == QTcpSocket::ConnectedState)
-//            socket->write(arr);
-//    }
 }
+
 void Server::stateChanged(QAbstractSocket::SocketState state) // обработчик статуса, нужен для контроля за "вещающим"
 {
 //    QObject * object = QObject::sender();
@@ -117,7 +113,53 @@ void Server::stateChanged(QAbstractSocket::SocketState state) // обработ�
     //        firstSocket = NULL;
 }
 
+//произошло изменение в вилках
 void Server::forkChanged()
 {
 
+    foreach (int master, masters) {
+        QByteArray arrOut;
+        QDataStream out(arrOut);
+        //мастер пуст, и левая вилка свободна
+        if (masterStatus.value(master) == Message::NOT && forks[master] == Message::FREE){
+                forks[master] = Message::USED;
+                out << master << Message::LEFT << Message::GET;
+                sockets[master]->write(arrOut);
+                masterStatus.insert(master, Message::LEFT);    //статус мастера - инструмент для левой руки
+
+        }//просят в правую руку и правая вилка свободна
+        else if (masterStatus.value(master) == Message::LEFT && forks[(master + 1) % sockets.count()] == Message::FREE) {
+            forks[(master + 1) % sockets.count()] = Message::USED;
+            out << master << Message::RIGHT << Message::GET;
+            sockets[master]->write(arrOut);
+            masterStatus.insert(master, Message::RIGHT);    //статус мастера - инструмент для правой руки
+            masters.removeAt(masters.indexOf(master));    //удаляем мастера из очереди - у него уже все есть
+        }
+    }
+}
+
+void Server::detailsChanged()
+{
+    bool isComplect = false;
+    foreach (int count, mastersDetails) {
+        if (count > 0){
+            isComplect = true;
+            break;
+        }
+    }
+    if (isComplect){
+        for (int i = 0; i < mastersDetails.count(); i++) {
+            --mastersDetails[i];
+        }
+        toFile("комплект сформирован и отправлен на склад\n");
+    }
+}
+
+void Server::toFile(QString str)
+{
+    QFile File ("Dispetcher.txt");
+    while (!File.open(QFile::Append));
+    QTextStream stream (&File);
+    stream <<"диспетчер: " + str + "\n";
+    File.close();
 }

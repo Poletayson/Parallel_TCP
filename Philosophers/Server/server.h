@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <QByteArray>
 #include <QDataStream>
+#include <QFile>
 #include <qcanal.h>
 #include <message.h>
 
@@ -27,6 +28,7 @@ private:
     QList<QTcpSocket *> sockets; // получатели данных
     QCanal *canal;
     QList <int> masters;  //очередь ожидающих мастеров
+    QList <int> mastersDetails;  //количество деталей, сделанных каждым мастером
     QMap <int, int> masterStatus;   //статусы мастеров по айдишникам
     QList <int> forks;  //массив вилок
 //    QTcpSocket *firstSocket; // вещатель
@@ -39,7 +41,8 @@ private:
 //    QTcpSocket *courierSocket;
 
     void forkChanged ();    //произошло изменение в вилках
-
+    void detailsChanged ();    //произошло изменение в деталях
+    void toFile (QString str);
 };
 
 #endif // SERVER_H

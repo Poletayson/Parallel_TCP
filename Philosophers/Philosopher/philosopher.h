@@ -9,7 +9,8 @@
 #include <QDataStream>
 #include <QThread>
 #include <QTcpSocket>
-#include <qcanal.h>
+#include <../Server/message.h>
+//#include <qcanal.h>
 //#include <qcanal.h>
 
 class Philosopher : public QObject
@@ -30,7 +31,7 @@ private slots:
     void slotConnected   ();
 
 private:
-    QCanal *serverCanal;
+    //QCanal *serverCanal;
 
     QTcpSocket *socket;
     QTcpSocket *socketService;

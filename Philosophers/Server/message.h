@@ -18,7 +18,7 @@ public:
 
     //левая, правая
     //взять, отдать
-    enum philosopher {LEFT = 0, RIGHT, GET, GIVE, COMPLETE, NOT, FREE, USED};
+    enum philosopher {LEFT = 0, RIGHT, GET, GIVE, COMPLETE, NOT, FREE, USED, START};
 
     QVariant getMessage() const;
     void setMessage(const QVariant &value);
@@ -26,6 +26,8 @@ public:
     int getType() const;
     void setType(int value);
     static const int DELAY = 80;
+    static const int DELAY_MAX = 800;
+    static const int MASTERS_COUNT = 5;
     static const int WAIT_MAX_TIME = 50000;
 
 
