@@ -4,10 +4,8 @@
 
 Philosopher::Philosopher(QObject *parent) : QObject(parent)
 {
-
-//    from = 0;
-//    code = 0;
-//    nextBlockSize = 0;
+    semaphoreServer = new QSystemSemaphore ("semaphoreServer");
+    semaphorePhilosopher = new QSystemSemaphore ("semaphorePhilosopher");
 
 }
 
@@ -34,29 +32,50 @@ void Philosopher::run()
             QThread::msleep(waitTime);  //небольшая пауза
             slotSend(Message::LEFT, Message::GET);     //просим инструмент в левую руку
             toFile("запросил инструмент в левую руку");
-            socket->waitForReadyRead(); //ждем когда ответят
-            slotReadyRead();    //читаем что нам прислали
+            do{
+                socket->waitForReadyRead(INT_MAX); //ждем когда ответят
+                slotReadyRead();    //читаем что нам прислали
+            } while (first != Message::LEFT);   //ждем
+
             if (first == Message::LEFT && second == Message::GET){
                 //получили!
                 toFile("получил инструмент в левую руку");
                 slotSend(Message::RIGHT, Message::GET);     //просим инструмент в правую руку
                 toFile("запросил инструмент в правую руку");
-                socket->waitForReadyRead(); //ждем когда ответят
-                slotReadyRead();    //читаем что нам прислали
-                if (first == Message::RIGHT && second == Message::GET){
+                do{
+                    socket->waitForReadyRead(INT_MAX); //ждем когда ответят
+                    slotReadyRead();    //читаем что нам прислали
+                }while (first != Message::RIGHT);   //ждем
+                //if (first == Message::RIGHT && second == Message::GET){
                     toFile("получил инструмент в правую руку");
                     QThread::msleep(qrand() % Message::DELAY_MAX);  //небольшая пауза
-                    slotSend(id, Message::COMPLETE);     //деталь готова
-                    toFile("передал свою деталь");
+
+                    slotSend(Message::RIGHT, Message::GIVE);     //возвращаем инструмент из правой руки
+                    toFile("вернул инструмент из правой руки\n");
+                    //QThread::msleep(qrand() % Message::DELAY_MAX + 350);  //небольшая пауза
+
+                    do{
+                        socket->waitForReadyRead(INT_MAX); //ждем когда ответят
+                        slotReadyRead();    //читаем что нам прислали
+                    }while (first != Message::COMPLETE);   //ждем пока сервер не примет
+
 
                     slotSend(Message::LEFT, Message::GIVE);     //возвращаем инструмент из левой руки
                     toFile("вернул инструмент из левой руки");
-                    slotSend(Message::RIGHT, Message::GIVE);     //возвращаем инструмент из правой руки
-                    toFile("вернул инструмент из правой руки\n");
-                }
-                else {
-                    toFile("ЧТО-ТО НЕ ТАК! Ждал инструмент в правую руку\n");
-                }
+
+                    do{
+                        socket->waitForReadyRead(INT_MAX); //ждем когда ответят
+                        slotReadyRead();    //читаем что нам прислали
+                    }while (first != Message::COMPLETE);   //ждем пока сервер не примет
+
+                    slotSend(-1, Message::COMPLETE);     //деталь готова
+                    toFile("передал свою деталь");
+
+
+                //}
+//                else {
+//                    toFile("ЧТО-ТО НЕ ТАК! Ждал инструмент в правую руку\n");
+//                }
             }
             else {
                 toFile("ЧТО-ТО НЕ ТАК! Ждал инструмент в левую руку\n");
@@ -84,12 +103,12 @@ void Philosopher::slotReadyRead()
 }
 
 //передаем на сервер, кому и что
-void Philosopher::slotSend(int forkNum, int action)
+void Philosopher::slotSend(int what, int code)
 {
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_11);
-    out << forkNum << id << action;   //что, от кого, код
+    out << what << id << code;   //что, от кого, код
 
     out.device()->seek(0);
 

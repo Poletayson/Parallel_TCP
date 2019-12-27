@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QSharedMemory>
+#include <QSystemSemaphore>
 #include <QFile>
 #include <QFileDevice>
 #include <QTextStream>
@@ -10,8 +11,6 @@
 #include <QThread>
 #include <QTcpSocket>
 #include <../Server/message.h>
-//#include <qcanal.h>
-//#include <qcanal.h>
 
 class Philosopher : public QObject
 {
@@ -27,14 +26,15 @@ private slots:
     void slotReadyRead   ();
     //0 - левая, 1 - правая
     //0 - взять, 1 - отдать
-    void slotSend(int forkNum, int action);    //передаем на сервер, какую вилку и что с ней делать
+    void slotSend(int what, int code);    //передаем на сервер, какую вилку и что с ней делать
     void slotConnected   ();
 
 private:
     //QCanal *serverCanal;
 
     QTcpSocket *socket;
-    QTcpSocket *socketService;
+    QSystemSemaphore *semaphoreServer;
+    QSystemSemaphore *semaphorePhilosopher;
     quint16  nextBlockSize;
 
 

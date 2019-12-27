@@ -18,15 +18,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    message.cpp \
-    philosopher.cpp \
-    qcanal.cpp
+    philosopher.cpp
 
 HEADERS += \
     mainwindow.h \
-    message.h \
-    philosopher.h \
-    qcanal.h
+    philosopher.h
 
 FORMS += \
     mainwindow.ui

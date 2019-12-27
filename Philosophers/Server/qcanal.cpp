@@ -37,7 +37,7 @@ void QCanal::lockCanal()
 
 void QCanal::unlockCanal()
 {
-    put(Message::EMPTY);
+//    put(Message::EMPTY);
 }
 
 bool QCanal::getIsEmpty()
@@ -48,6 +48,6 @@ bool QCanal::getIsEmpty()
     int val = ((int*)dataPointer)[0];
     unlock();
 
-    return val == Message::EMPTY ? true : false;
+//    return val == Message::EMPTY ? true : false;
 
 }
