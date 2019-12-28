@@ -4,11 +4,8 @@
 
 Philosopher::Philosopher(QObject *parent) : QObject(parent)
 {
-    semaphoreServer = new QSystemSemaphore ("semaphoreServer");
-    semaphorePhilosopher = new QSystemSemaphore ("semaphorePhilosopher");
 
 }
-
 
 void Philosopher::run()
 {
@@ -19,13 +16,11 @@ void Philosopher::run()
     QDataStream idStream(socket);
     idStream >> id;     //получаем наш id
     toFile("мастер запущен");
-    //slotSend(-1, Message::COMPLETE);     //говорим что готовы
 
     socket->waitForReadyRead(); //ждем старта
     int start;
     idStream >> start;     //получаем сигнал
     qsrand(id);
-    //serverCanal = new QCanal ("ServerCanal"); //канал, чтобы знать сколько сокетов
 
     if(start == Message::START)
     {

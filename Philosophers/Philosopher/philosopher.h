@@ -24,8 +24,6 @@ public slots:
 
 private slots:
     void slotReadyRead   ();
-    //0 - левая, 1 - правая
-    //0 - взять, 1 - отдать
     void slotSend(int what, int code);    //передаем на сервер, какую вилку и что с ней делать
     void slotConnected   ();
 

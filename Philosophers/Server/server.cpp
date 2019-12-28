@@ -3,8 +3,7 @@
 Server::Server(QObject *parent) : QObject(parent)//, firstSocket(NULL)
 {
     server = new QTcpServer(this);
-    //canal = new QCanal ("ServerCanal"); //канал, чтобы знать сколько сокетов
-    //canal->put(0);
+    WORKERS_COUNT = 10;
     qDebug() << "server listen = " << server->listen(QHostAddress("127.0.0.1"), 2140);
     connect(server, SIGNAL(newConnection()), this, SLOT(incommingConnection())); // подключаем сигнал "новое подключение" к нашему обработчику подключений
 }
@@ -17,22 +16,20 @@ int Server::getSocketsCount()
 void Server::incommingConnection() // обработчик подключений
 {
     QTcpSocket * socket = server->nextPendingConnection();  //получаем сокет нового входящего подключения
-    sockets << socket;      //добавляем сокет
-    mastersDetails << 0;    //добавляем слот для деталей
-    forks << Message::FREE;   //добавляем свободную вилку
-// делаем обработчик изменения статуса сокета
-    connect(sockets[sockets.count() - 1], SIGNAL(readyRead()), this, SLOT(readyRead())); // подключаем входящие сообщения от сокета на наш обработчик
-    qDebug()<<"Подключен сокет "<<sockets.count() - 1;
-
-
-    QByteArray arr;
-    QDataStream in(&arr, QIODevice::WriteOnly);
-    in << sockets.count() - 1;      //единственный передаваемый параметр - id
-    in.device()->seek(0);
-    sockets[sockets.count() - 1]->write(arr);   //пишем подключенному философу его id
-
-
-    if (sockets.count() == 5){
+    if (sockets.count() < WORKERS_COUNT){
+        sockets << socket;      //добавляем сокет
+        mastersDetails << 0;    //добавляем слот для деталей
+        forks << Message::FREE;   //добавляем свободную вилку
+        // делаем обработчик изменения статуса сокета
+        connect(sockets[sockets.count() - 1], SIGNAL(readyRead()), this, SLOT(readyRead())); // подключаем входящие сообщения от сокета на наш обработчик
+        qDebug()<<"Подключен сокет "<<sockets.count() - 1;
+        QByteArray arr;
+        QDataStream in(&arr, QIODevice::WriteOnly);
+        in << sockets.count() - 1;      //единственный передаваемый параметр - id
+        in.device()->seek(0);
+        sockets[sockets.count() - 1]->write(arr);   //пишем подключенному философу его id
+    } else if (sockets.count() == WORKERS_COUNT) {
+        storage = socket;       //это сокет склада
         QThread::msleep(450);  //небольшая пауза
         for (int i = 0; i < sockets.count(); i++) {
             QByteArray arrN;
@@ -41,6 +38,14 @@ void Server::incommingConnection() // обработчик подключени�
             in2.device()->seek(0);
             sockets[i]->write(arrN);   //говорим стартовать
         }
+    }
+
+
+
+
+
+    if (sockets.count() == 7){
+
     }
 
 }
@@ -201,6 +206,11 @@ void Server::detailsChanged()
             mastersDetails[i]--;
         }
         toFile("комплект сформирован и отправлен на склад\n");
+        QByteArray arrOut;
+        QDataStream out(&arrOut, QIODevice::WriteOnly);
+        out << Message::COMPLETE;
+        out.device()->seek(0);
+        storage->write(arrOut);
     }
 }
 

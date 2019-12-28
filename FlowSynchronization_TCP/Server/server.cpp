@@ -23,19 +23,8 @@ void Server::incommingConnection() // обработчик подключени�
 
     canal->put(sockets.count());
     qDebug()<<"Подключен сокет "<<canal->get();
-
-
-//    if (!firstSocket) { // если у нас нет "вещающего", то данное подключение становится вещающим
-//        connect(socket, SIGNAL(readyRead()), this, SLOT(readyRead())); // подключаем входящие сообщения от вещающего на наш обработчик
-//        socket->write("server"); // говорим ему что он "вещает"
-//        firstSocket = socket; // сохраняем себе"
-//        qDebug() << "this one is server";
-//    }
-//    else { // иначе говорим подключенному что он "получатель"
-//        socket->write("client");
-//        sockets << socket;
-//    }
 }
+
 void Server::readyRead() // обработчик входящих сообщений от "вещающего"
 {
     qDebug() << "Получили сообщение";
@@ -48,21 +37,5 @@ void Server::readyRead() // обработчик входящих сообщен
     qDebug() << "Серверу пришло сообщение: " << to << " " << from << " " << code;
 
     sockets[to]->write(arr);
-//
-
-
-//    foreach(QTcpSocket *socket, sockets) { // пишем входящие данные от "вещающего" получателям
-//        if (socket->state() == QTcpSocket::ConnectedState)
-//            socket->write(arr);
-//    }
 }
-void Server::stateChanged(QAbstractSocket::SocketState state) // обработчик статуса, нужен для контроля за "вещающим"
-{
-//    QObject * object = QObject::sender();
-//    if (!object)
-//        return;
-//    QTcpSocket * socket = static_cast<QTcpSocket *>(object);
-//    qDebug() << state;
-//    if (socket == firstSocket && state == QAbstractSocket::UnconnectedState)
-//        firstSocket = NULL;
-}
+

@@ -26,11 +26,14 @@ public slots:
 private:
     QTcpServer *server; // указатель на сервер
     QList<QTcpSocket *> sockets; // получатели данных
+    QTcpSocket *storage;
     QCanal *canal;
     QList <int> masters;  //очередь ожидающих мастеров
     QList <int> mastersDetails;  //количество деталей, сделанных каждым мастером
     QMap <int, int> masterStatus;   //статусы мастеров по айдишникам
     QList <int> forks;  //массив вилок
+
+    int WORKERS_COUNT;
 //    QTcpSocket *firstSocket; // вещатель
 
 //    QList <QTcpSocket *> sockets;
